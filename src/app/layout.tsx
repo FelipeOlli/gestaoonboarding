@@ -6,6 +6,8 @@ import { getEnabledSectorTabsFromSettings } from "@/lib/services/settings";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Painel de Homologação",
   description: "Painel interno de precificação e onboarding fiscal",
