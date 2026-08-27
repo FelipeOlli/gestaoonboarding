@@ -1,5 +1,7 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { boolean, integer, pgTable, real, text } from "drizzle-orm/pg-core";
+
+const nowIso = sql`to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`;
 
 export const COMPANY_STATUSES = [
   "entrada",
@@ -14,26 +16,24 @@ export const MEETING_SYNC_STATUSES = ["none", "pending", "synced", "failed"] as 
 
 export type MeetingSyncStatus = (typeof MEETING_SYNC_STATUSES)[number];
 
-export const franchises = sqliteTable("franchises", {
+export const franchises = pgTable("franchises", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email"),
-  active: integer("active", { mode: "boolean" }).notNull().default(true),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
+  active: boolean("active").notNull().default(true),
+  createdAt: text("created_at").notNull().default(nowIso),
 });
 
-export const sectors = sqliteTable("sectors", {
+export const sectors = pgTable("sectors", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
   responsibleEmails: text("responsible_emails"),
-  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  active: boolean("active").notNull().default(true),
 });
 
-export const companies = sqliteTable("companies", {
+export const companies = pgTable("companies", {
   id: text("id").primaryKey(),
   razaoSocial: text("razao_social").notNull(),
   nomeFantasia: text("nome_fantasia"),
@@ -50,12 +50,10 @@ export const companies = sqliteTable("companies", {
   competenciaEntrada: text("competencia_entrada"),
   cnpjwsRaw: text("cnpjws_raw"),
   status: text("status").notNull().default("entrada"),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
+  createdAt: text("created_at").notNull().default(nowIso),
 });
 
-export const companySectors = sqliteTable("company_sectors", {
+export const companySectors = pgTable("company_sectors", {
   id: text("id").primaryKey(),
   companyId: text("company_id")
     .notNull()
@@ -70,14 +68,12 @@ export const companySectors = sqliteTable("company_sectors", {
   status: text("status").notNull().default("ativo"),
 });
 
-export const fiscalOnboarding = sqliteTable("fiscal_onboarding", {
+export const fiscalOnboarding = pgTable("fiscal_onboarding", {
   companyId: text("company_id")
     .primaryKey()
     .references(() => companies.id, { onDelete: "cascade" }),
   inscricaoEstadual: text("inscricao_estadual"),
-  inscricaoEstadualAuto: integer("inscricao_estadual_auto", { mode: "boolean" })
-    .notNull()
-    .default(false),
+  inscricaoEstadualAuto: boolean("inscricao_estadual_auto").notNull().default(false),
   estado: text("estado"),
   municipio: text("municipio"),
   logradouro: text("logradouro"),
@@ -91,7 +87,7 @@ export const fiscalOnboarding = sqliteTable("fiscal_onboarding", {
   completedAt: text("completed_at"),
 });
 
-export const meetings = sqliteTable("meetings", {
+export const meetings = pgTable("meetings", {
   id: text("id").primaryKey(),
   franchiseId: text("franchise_id")
     .notNull()
@@ -105,7 +101,7 @@ export const meetings = sqliteTable("meetings", {
   syncStatus: text("sync_status").notNull().default("none"),
 });
 
-export const meetingCompanies = sqliteTable("meeting_companies", {
+export const meetingCompanies = pgTable("meeting_companies", {
   id: text("id").primaryKey(),
   meetingId: text("meeting_id")
     .notNull()
@@ -116,29 +112,23 @@ export const meetingCompanies = sqliteTable("meeting_companies", {
     .references(() => companies.id, { onDelete: "cascade" }),
 });
 
-export const appSettings = sqliteTable("app_settings", {
+export const appSettings = pgTable("app_settings", {
   key: text("key").primaryKey(),
   value: text("value"),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(nowIso),
 });
 
 export const ADMIN_USER_ROLES = ["admin"] as const;
 export type AdminUserRole = (typeof ADMIN_USER_ROLES)[number];
 
-export const adminUsers = sqliteTable("admin_users", {
+export const adminUsers = pgTable("admin_users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("admin"),
-  active: integer("active", { mode: "boolean" }).notNull().default(true),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
+  active: boolean("active").notNull().default(true),
+  createdAt: text("created_at").notNull().default(nowIso),
+  updatedAt: text("updated_at").notNull().default(nowIso),
 });
 
 export const franchisesRelations = relations(franchises, ({ many, one }) => ({

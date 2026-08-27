@@ -1,41 +1,23 @@
-import { createClient, type Client } from "@libsql/client";
-import path from "node:path";
-import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
+import { Pool } from "pg";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import * as schema from "@/lib/db/schema";
 
-type Db = LibSQLDatabase<typeof schema>;
+type Db = NodePgDatabase<typeof schema>;
 
-let client: Client | null = null;
+let pool: Pool | null = null;
 let db: Db | null = null;
-
-function resolveDatabaseUrl(): string {
-  const configured = process.env.TURSO_DATABASE_URL?.trim() || "file:./data/local.db";
-
-  if (!configured.startsWith("file:")) {
-    return configured;
-  }
-
-  const filePath = configured.slice("file:".length);
-  if (path.isAbsolute(filePath)) {
-    return configured;
-  }
-
-  return `file:${path.resolve(process.cwd(), filePath)}`;
-}
 
 export function getDb(): Db {
   if (db) return db;
 
-  const url = resolveDatabaseUrl();
-  const authToken = process.env.TURSO_AUTH_TOKEN;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL não configurada.");
+  }
 
-  client = createClient({
-    url,
-    authToken: authToken || undefined,
-  });
-
-  db = drizzle(client, { schema });
+  pool = new Pool({ connectionString });
+  db = drizzle(pool, { schema });
   return db;
 }
 
